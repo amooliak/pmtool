@@ -1,51 +1,35 @@
-const projects = [
-  ['Website Redesign','PRJ-001','Sarah Chen','Marketing','Execution','Active'],
-  ['ERP Migration','PRJ-002','James Wilson','IT','Planning','Active'],
-  ['Mobile App Launch','PRJ-003','Maria Lopez','Product','Testing','At Risk'],
-  ['Data Warehouse','PRJ-004','David Kim','Engineering','Execution','Active'],
-  ['Brand Refresh','PRJ-005','Emily Foster','Marketing','Closure','Completed'],
-  ['Cloud Migration','PRJ-006','Alex Rivera','IT','Execution','Active'],
-  ['Security Audit','PRJ-008','Tom Baker','Compliance','Execution','At Risk'],
-  ['HR System Upgrade','PRJ-009','Rachel Green','HR','Planning','Active'],
-  ['Analytics Platform','PRJ-010','Mike Chen','Engineering','Execution','Active'],
-  ['Customer Portal','PRJ-007','Lisa Zhang','Product','Initiation','Active']
+const seedProjects=[
+ {name:'Website Redesign',id:'PRJ-001',manager:'Sarah Chen',dept:'Marketing',phase:'Execution',status:'On Track',risk:'Low',progress:76,budget:420000,savings:250000},
+ {name:'ERP Migration',id:'PRJ-002',manager:'James Wilson',dept:'IT',phase:'Planning',status:'At Risk',risk:'High',progress:42,budget:780000,savings:360000},
+ {name:'Mobile App Launch',id:'PRJ-003',manager:'Maria Lopez',dept:'Product',phase:'Testing',status:'On Track',risk:'Medium',progress:63,budget:350000,savings:180000},
+ {name:'Data Warehouse',id:'PRJ-004',manager:'David Kim',dept:'Analytics',phase:'Execution',status:'Delayed',risk:'High',progress:38,budget:510000,savings:275000},
+ {name:'Brand Refresh',id:'PRJ-005',manager:'Emily Laurent',dept:'Marketing',phase:'Closure',status:'Completed',risk:'Low',progress:100,budget:145000,savings:98000},
+ {name:'Security Audit',id:'PRJ-006',manager:'Tom Baker',dept:'Compliance',phase:'Execution',status:'On Track',risk:'Low',progress:55,budget:180000,savings:120000},
+ {name:'CRM Integration',id:'PRJ-007',manager:'Lisa Tremblay',dept:'Sales',phase:'Execution',status:'At Risk',risk:'Medium',progress:48,budget:300000,savings:170000},
+ {name:'Office Relocation',id:'PRJ-008',manager:'Marc Dubois',dept:'Operations',phase:'Initiation',status:'On Track',risk:'Low',progress:22,budget:200000,savings:100000}
 ];
-
-const rows = document.querySelector('#project-rows');
-const empty = document.querySelector('#empty');
-
-function render(filter = 'All Projects') {
-  const visible = filter === 'All Projects' ? projects : projects.filter(project => project[5] === filter);
-  rows.innerHTML = visible.map(project => {
-    const statusClass = project[5] === 'Completed' ? 'completed' : project[5] === 'At Risk' ? 'risk' : '';
-    const trend = ['ERP Migration','Mobile App Launch','Brand Refresh','Cloud Migration','Security Audit','Analytics Platform'].includes(project[0]) ? '<span class="trend">↗</span>' : '<span class="trend muted">−</span>';
-    return `<tr><td>${project[0]}</td><td class="muted">${project[1]}</td><td>${project[2]}</td><td class="muted">${project[3]}</td><td>${project[4]}</td><td><span class="status ${statusClass}">${trend}${project[5]}</span></td></tr>`;
-  }).join('');
-  empty.style.display = visible.length ? 'none' : 'block';
-}
-
-document.querySelectorAll('.filters button').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('.filters button').forEach(item => item.classList.remove('active'));
-  button.classList.add('active');
-  render(button.dataset.filter);
-}));
-
-document.querySelectorAll('.page-tabs button').forEach(button => button.addEventListener('click', () => {
-  document.querySelectorAll('.page-tabs button').forEach(item => item.classList.remove('active'));
-  button.classList.add('active');
-}));
-
-const menu = document.querySelector('#create-menu');
-function toggleMenu() {
-  menu.classList.toggle('open');
-  menu.setAttribute('aria-hidden', String(!menu.classList.contains('open')));
-}
-document.querySelector('#fab').addEventListener('click', toggleMenu);
-document.querySelector('#create-project').addEventListener('click', toggleMenu);
-document.addEventListener('click', event => {
-  if (!menu.contains(event.target) && !event.target.closest('#fab') && !event.target.closest('#create-project')) {
-    menu.classList.remove('open');
-  }
-});
-
-render();
+let projects;try{projects=JSON.parse(localStorage.getItem('pmtool-projects'))||seedProjects}catch{projects=seedProjects}
+let view='portfolio',filter='All',query='',editingId=null;const content=document.querySelector('#content');
+const slug=s=>s.toLowerCase().replaceAll(' ','-');
+const saveProjects=()=>localStorage.setItem('pmtool-projects',JSON.stringify(projects));
+function table(list=filtered()){return `<div class="table-wrap"><table><thead><tr><th>Project name</th><th>Project ID</th><th>Manager</th><th>Department</th><th>Phase</th><th>Status</th><th>Risk</th><th>Progress</th><th>Actions</th></tr></thead><tbody>${list.map(p=>`<tr><td><b>${p.name}</b></td><td>${p.id}</td><td>${p.manager}</td><td>${p.dept}</td><td>${p.phase}</td><td><span class="badge ${slug(p.status)}">${p.status}</span></td><td><span class="risk ${p.risk.toLowerCase()}">${p.risk}</span></td><td><span class="progress"><i class="bar"><i style="width:${p.progress}%"></i></i>${p.progress}%</span></td><td><span class="row-actions"><button class="edit-project" data-id="${p.id}" title="Edit project" aria-label="Edit ${p.name}">✎</button><button class="delete-project" data-id="${p.id}" title="Delete project" aria-label="Delete ${p.name}">⌫</button></span></td></tr>`).join('')}</tbody></table></div>`}
+function filtered(){return projects.filter(p=>(filter==='All'||p.status===filter)&&p.name.toLowerCase().includes(query.toLowerCase()))}
+function controls(){return `<div class="filters"><div class="pills">${['All','On Track','Completed','At Risk'].map(x=>`<button class="filter ${filter===x?'active':''}" data-filter="${x}">${x}</button>`).join('')}</div><input class="search" aria-label="Search projects" placeholder="Search projects…" value="${query}"><select class="status-select" aria-label="Project status">${['All','On Track','At Risk','Delayed','Completed'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select></div>`}
+function card(){return `<section class="card"><div class="card-head"><h3>⌄ &nbsp;Projects Overview</h3><button class="ghost export-csv">⇩ Export CSV</button></div>${filtered().length?table():`<div class="empty">No projects match your filters.</div>`}</section>`}
+function render(){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));if(view==='dashboard')content.innerHTML=`<div class="view-title"><div><h2>Dashboard</h2><p>A live overview of your project portfolio</p></div></div><div class="metrics"><article class="metric"><p>Active projects</p><b>7</b><small>8 total projects</small></article><article class="metric"><p>Projects at risk</p><b>3</b><small>Need attention</small></article><article class="metric"><p>Total budget</p><b>$2,885,000</b><small>Across all projects</small></article><article class="metric"><p>Realized savings</p><b>$1,553,000</b><small>Current portfolio</small></article></div>`;
+else if(view==='projects')content.innerHTML=`<div class="view-title"><div><h2>Projects</h2><p>Create, find and update projects across your organization</p></div><button class="primary create-trigger">＋ Create project</button></div>${controls()}${card()}`;
+else if(view==='portfolio')content.innerHTML=`<div class="view-title"><div><h2>Project Portfolio</h2><p>Track and manage projects across your organization</p></div></div>${controls()}${card()}`;
+else content.innerHTML=`<div class="view-title"><div><h2>Reports</h2><p>View, compare and export project performance and financial data</p></div><button class="ghost export-csv">⇩ Export all</button></div><div class="report-filters"><select><option>All dates</option><option>This quarter</option></select><select><option>All departments</option><option>Marketing</option><option>IT</option></select><select><option>All risk levels</option><option>Low</option><option>Medium</option><option>High</option></select></div>${accordion('Project Overview','8 projects',table(),true)}${accordion('Savings Report','$1,553,000 savings','',false)}${accordion('Budget Report','68% avg utilization','',false)}`;bind();}
+function accordion(title,summary,body,open){return `<section class="accordion ${open?'':'closed'}"><button class="accordion-head"><span class="arrow">${open?'⌄':'›'}</span><strong>${title}</strong><span class="count">8 projects</span><span class="summary">${summary}</span><span class="export ghost">⇩ Export CSV</span></button><div class="accordion-body">${body}</div></section>`}
+function bindRows(){document.querySelectorAll('.edit-project').forEach(b=>b.onclick=()=>editProject(b.dataset.id));document.querySelectorAll('.delete-project').forEach(b=>b.onclick=()=>deleteProject(b.dataset.id));document.querySelectorAll('.export-csv').forEach(b=>b.onclick=exportCSV)}
+function bind(){document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render()});document.querySelector('.search')?.addEventListener('input',e=>{query=e.target.value;const old=document.querySelector('.card');if(old){old.outerHTML=card();bindRows()}});document.querySelector('.status-select')?.addEventListener('change',e=>{filter=e.target.value;render()});document.querySelectorAll('.create-trigger').forEach(b=>b.onclick=openCreateModal);bindRows();document.querySelectorAll('.accordion-head').forEach(b=>b.onclick=e=>{if(e.target.closest('.export'))return;const a=b.closest('.accordion');a.classList.toggle('closed');b.querySelector('.arrow').textContent=a.classList.contains('closed')?'›':'⌄'})}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
+const modal=document.querySelector('#modal'),quick=document.querySelector('#quick-menu'),form=document.querySelector('#project-form'),modalTitle=document.querySelector('.modal-head h2'),modalSubmit=form.querySelector('button[type="submit"]');function showModal(){quick.classList.remove('open');modal.classList.add('open');document.body.style.overflow='hidden'}function closeModal(){modal.classList.remove('open');document.body.style.overflow=''}
+function nextProjectId(){const next=Math.max(0,...projects.map(p=>Number(p.id.match(/\d+/)?.[0])||0))+1;return `PRJ-${String(next).padStart(3,'0')}`}
+function addOptionIfMissing(select,value){if(![...select.options].some(o=>o.value===value))select.add(new Option(value,value))}
+function openCreateModal(){editingId=null;form.reset();form.elements.id.value=nextProjectId();modalTitle.textContent='Create a new project';modalSubmit.textContent='Create project';showModal()}
+function editProject(id){const p=projects.find(item=>item.id===id);if(!p)return;editingId=id;addOptionIfMissing(form.elements.manager,p.manager);addOptionIfMissing(form.elements.department,p.dept);addOptionIfMissing(form.elements.status,p.status);form.elements.name.value=p.name;form.elements.id.value=p.id;form.elements.manager.value=p.manager;form.elements.department.value=p.dept;form.elements.status.value=p.status;form.elements.risk.value=p.risk;form.elements.progress.value=p.progress;modalTitle.textContent='Edit project';modalSubmit.textContent='Save changes';showModal()}
+function deleteProject(id){const p=projects.find(item=>item.id===id);if(!p||!confirm(`Delete “${p.name}”? This cannot be undone.`))return;projects=projects.filter(item=>item.id!==id);saveProjects();render()}
+document.querySelector('#fab').onclick=()=>quick.classList.toggle('open');document.querySelectorAll('.create-trigger').forEach(b=>b.onclick=openCreateModal);document.querySelector('#close-modal').onclick=closeModal;document.querySelector('#cancel-modal').onclick=closeModal;modal.onclick=e=>{if(e.target===modal)closeModal()};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+form.onsubmit=e=>{e.preventDefault();const d=new FormData(form);const values={name:d.get('name'),id:d.get('id'),manager:d.get('manager'),dept:d.get('department'),status:d.get('status'),risk:d.get('risk'),progress:Number(d.get('progress'))};if(editingId){projects=projects.map(p=>p.id===editingId?{...p,...values}:p)}else{projects.push({...values,phase:'Initiation',budget:0,savings:0})}saveProjects();form.reset();closeModal();view='projects';render()};
+function exportCSV(){const head=['Project name','Project ID','Manager','Department','Phase','Status','Risk','Progress'];const csv=[head,...filtered().map(p=>[p.name,p.id,p.manager,p.dept,p.phase,p.status,p.risk,p.progress+'%'])].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='projecthub-projects.csv';a.click();URL.revokeObjectURL(a.href)}render();
