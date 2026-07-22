@@ -8,3 +8,24 @@ window.PM_DATA = [
   { name: 'CRM Integration', id: 'PRJ-007', manager: 'Lisa Tremblay', dept: 'Sales', phase: 'Execution', status: 'At Risk', risk: 'Medium', progress: 48, budget: 300000, savings: 170000, start: '2026-02-15', target: '2026-12-15', description: 'Connect CRM data with marketing and support tools.', blockers: 'API rate limits require mitigation.' },
   { name: 'Office Relocation', id: 'PRJ-008', manager: 'Marc Dubois', dept: 'Operations', phase: 'Initiation', status: 'On Track', risk: 'Low', progress: 22, budget: 200000, savings: 100000, start: '2026-05-01', target: '2027-01-15', description: 'Coordinate the Toronto office relocation.', blockers: '' }
 ];
+window.PM_SAVINGS_BY_MONTH = [
+  { month: "Jan", savings: 95000 },
+  { month: "Feb", savings: 110000 },
+  { month: "Mar", savings: 118000 },
+  { month: "Apr", savings: 120000 },
+  { month: "May", savings: 125000 },
+  { month: "Jun", savings: 130000 },
+  { month: "Jul", savings: 128000 },
+  { month: "Aug", savings: 140000 },
+  { month: "Sep", savings: 132000 },
+  { month: "Oct", savings: 145000 },
+  { month: "Nov", savings: 150000 },
+  { month: "Dec", savings: 160000 },
+];
+window.PM_SAVINGS_BY_YEAR = [
+  { year: "2022", savings: 780000 },
+  { year: "2023", savings: 980000 },
+  { year: "2024", savings: 1180000 },
+  { year: "2025", savings: 1360000 },
+  { year: "2026", savings: 1553000 },
+];

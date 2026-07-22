@@ -69,16 +69,481 @@
     bindViewEvents();
   }
 
-  function renderDashboard() {
-    const totals = metrics();
-    content.innerHTML = `${viewTitle('Dashboard', 'A live overview of your project portfolio')}
-      <div class="metrics">
-        <article class="metric"><p>Active projects</p><b>${totals.active}</b><small>${projects.length} total projects</small></article>
-        <article class="metric"><p>Projects needing attention</p><b>${totals.attention}</b><small>At risk or delayed</small></article>
-        <article class="metric"><p>Total budget</p><b>${money(totals.budget)}</b><small>Across all projects</small></article>
-        <article class="metric"><p>Forecasted savings</p><b>${money(totals.savings)}</b><small>Current portfolio</small></article>
-      </div>`;
+function renderDashboard() {
+  const totals = metrics();
+
+  const annualSavings = window.PM_SAVINGS_BY_MONTH.reduce(
+    (total, month) => total + month.savings,
+    0
+  );
+
+  content.innerHTML = `
+    ${viewTitle(
+      "Dashboard",
+      "A live overview of your project portfolio"
+    )}
+
+    <div class="metrics">
+      <article class="metric">
+        <p>Active projects</p>
+        <b>${totals.active}</b>
+        <small>${projects.length} total projects</small>
+      </article>
+
+      <article class="metric">
+        <p>Projects needing attention</p>
+        <b>${totals.attention}</b>
+        <small>At risk or delayed</small>
+      </article>
+
+      <article class="metric">
+        <p>Total budget</p>
+        <b>${money(totals.budget)}</b>
+        <small>Across all projects</small>
+      </article>
+
+      <article class="metric">
+        <p>Annual savings</p>
+        <b>${money(annualSavings)}</b>
+        <small>Total forecasted this year</small>
+      </article>
+    </div>
+
+    <div class="chart-grid">
+      <article class="chart-card">
+        <div class="chart-heading">
+          <h3>Projects by status</h3>
+          <p>Current portfolio distribution</p>
+        </div>
+
+        <div class="chart-container doughnut-container">
+          <canvas
+            id="status-chart"
+            role="img"
+            aria-label="Doughnut chart showing projects grouped by status"
+          ></canvas>
+        </div>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-heading-row">
+          <div class="chart-heading">
+            <h3>Savings by month</h3>
+            <p>Forecasted savings for the current year</p>
+          </div>
+
+          <div class="chart-actions">
+  <button
+    type="button"
+    class="ghost export-chart"
+    id="export-monthly-savings"
+  >
+    ⇩ PNG
+  </button>
+
+  <button
+    type="button"
+    class="ghost export-chart"
+    id="export-monthly-csv"
+  >
+    ⇩ CSV
+  </button>
+</div>
+        </div>
+
+        <div class="chart-container">
+          <canvas
+            id="savings-chart"
+            role="img"
+            aria-label="Bar chart showing forecasted savings for each month"
+          ></canvas>
+        </div>
+      </article>
+
+      <article class="chart-card chart-card-wide">
+        <div class="chart-heading-row">
+          <div class="chart-heading">
+            <h3>Savings by year</h3>
+            <p>Annual savings trend over five years</p>
+          </div>
+
+         <div class="chart-actions">
+  <button
+    type="button"
+    class="ghost export-chart"
+    id="export-yearly-savings"
+  >
+    ⇩ PNG
+  </button>
+
+  <button
+    type="button"
+    class="ghost export-chart"
+    id="export-yearly-csv"
+  >
+    ⇩ CSV
+  </button>
+</div>
+        </div>
+
+        <div class="chart-container yearly-chart-container">
+          <canvas
+            id="yearly-savings-chart"
+            role="img"
+            aria-label="Line chart showing annual savings over five years"
+          ></canvas>
+        </div>
+      </article>
+    </div>
+  `;
+
+  requestAnimationFrame(renderDashboardCharts);
+}
+
+function renderDashboardCharts() {
+  const statusCanvas = document.querySelector("#status-chart");
+  const monthlyCanvas = document.querySelector("#savings-chart");
+  const yearlyCanvas = document.querySelector(
+    "#yearly-savings-chart"
+  );
+
+  if (
+    !statusCanvas ||
+    !monthlyCanvas ||
+    !yearlyCanvas ||
+    typeof Chart === "undefined"
+  ) {
+    return;
   }
+
+  if (window.pmDashboardCharts) {
+    window.pmDashboardCharts.forEach((chart) => chart.destroy());
+  }
+
+  const statusLabels = [
+    "On Track",
+    "At Risk",
+    "Delayed",
+    "Completed",
+    "Not Started",
+  ];
+
+  const statusCounts = statusLabels.map(
+    (status) =>
+      projects.filter(
+        (project) => project.status === status
+      ).length
+  );
+
+  const statusChart = new Chart(statusCanvas, {
+    type: "doughnut",
+
+    data: {
+      labels: statusLabels,
+
+      datasets: [
+        {
+          label: "Projects",
+          data: statusCounts,
+
+          backgroundColor: [
+            "#22a06b",
+            "#e34935",
+            "#f5a524",
+            "#0c66e4",
+            "#8993a4",
+          ],
+
+          borderColor: "#ffffff",
+          borderWidth: 3,
+          hoverOffset: 5,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "68%",
+
+      plugins: {
+        legend: {
+          position: "bottom",
+
+          labels: {
+            usePointStyle: true,
+            pointStyle: "circle",
+            padding: 18,
+            color: "#44546f",
+          },
+        },
+
+        tooltip: {
+          callbacks: {
+            label(context) {
+              const value = context.raw || 0;
+
+              return `${context.label}: ${value} project${
+                value === 1 ? "" : "s"
+              }`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const monthlySavingsChart = new Chart(monthlyCanvas, {
+    type: "bar",
+
+    data: {
+      labels: window.PM_SAVINGS_BY_MONTH.map(
+        (item) => item.month
+      ),
+
+      datasets: [
+        {
+          label: "Monthly savings",
+
+          data: window.PM_SAVINGS_BY_MONTH.map(
+            (item) => item.savings
+          ),
+
+          backgroundColor: "#0c66e4",
+          hoverBackgroundColor: "#0055cc",
+          borderRadius: 5,
+          borderSkipped: false,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+
+          ticks: {
+            color: "#5e6c84",
+          },
+        },
+
+        y: {
+          beginAtZero: true,
+
+          grid: {
+            color: "#ebecf0",
+          },
+
+          ticks: {
+            color: "#5e6c84",
+
+            callback(value) {
+              return `$${value / 1000}k`;
+            },
+          },
+        },
+      },
+
+      plugins: {
+        legend: {
+          display: false,
+        },
+
+        tooltip: {
+          callbacks: {
+            label(context) {
+              return `Savings: ${money(context.raw)}`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const yearlySavingsChart = new Chart(yearlyCanvas, {
+    type: "line",
+
+    data: {
+      labels: window.PM_SAVINGS_BY_YEAR.map(
+        (item) => item.year
+      ),
+
+      datasets: [
+        {
+          label: "Annual savings",
+
+          data: window.PM_SAVINGS_BY_YEAR.map(
+            (item) => item.savings
+          ),
+
+          backgroundColor: "rgba(34, 160, 107, 0.15)",
+          borderColor: "#22a06b",
+          pointBackgroundColor: "#22a06b",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 3,
+          tension: 0.3,
+          fill: true,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+
+          ticks: {
+            color: "#5e6c84",
+          },
+        },
+
+        y: {
+          beginAtZero: true,
+
+          grid: {
+            color: "#ebecf0",
+          },
+
+          ticks: {
+            color: "#5e6c84",
+
+            callback(value) {
+              return `$${value / 1000000}M`;
+            },
+          },
+        },
+      },
+
+      plugins: {
+        legend: {
+          display: false,
+        },
+
+        tooltip: {
+          callbacks: {
+            label(context) {
+              return `Annual savings: ${money(context.raw)}`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  window.pmDashboardCharts = [
+    statusChart,
+    monthlySavingsChart,
+    yearlySavingsChart,
+  ];
+
+  const exportMonthlyButton = document.querySelector(
+    "#export-monthly-savings"
+  );
+
+  const exportYearlyButton = document.querySelector(
+    "#export-yearly-savings"
+  );
+  const exportMonthlyCSVButton = document.querySelector(
+  "#export-monthly-csv"
+);
+
+const exportYearlyCSVButton = document.querySelector(
+  "#export-yearly-csv"
+);
+
+  exportMonthlyButton.addEventListener("click", () => {
+    exportChartAsPNG(
+      monthlySavingsChart,
+      "monthly-savings-chart.png"
+    );
+  });
+
+  exportYearlyButton.addEventListener("click", () => {
+    exportChartAsPNG(
+      yearlySavingsChart,
+      "yearly-savings-chart.png"
+    );
+  });
+  exportMonthlyCSVButton.addEventListener("click", () => {
+  exportSavingsCSV(
+    window.PM_SAVINGS_BY_MONTH,
+    "Month",
+    "monthly-savings.csv"
+  );
+});
+
+exportYearlyCSVButton.addEventListener("click", () => {
+  exportSavingsCSV(
+    window.PM_SAVINGS_BY_YEAR,
+    "Year",
+    "yearly-savings.csv"
+  );
+});
+
+}
+
+function exportChartAsPNG(chart, filename) {
+  const downloadLink = document.createElement("a");
+
+  downloadLink.download = filename;
+  downloadLink.href = chart.toBase64Image(
+    "image/png",
+    1
+  );
+
+  downloadLink.click();
+}
+
+function exportSavingsCSV(data, periodLabel, filename) {
+  const rows = [
+    [periodLabel, "Savings"],
+    ...data.map((item) => [
+      item.month || item.year,
+      item.savings,
+    ]),
+  ];
+
+  const csv = rows
+    .map((row) =>
+      row
+        .map((value) => {
+          const escapedValue = String(value).replaceAll(
+            '"',
+            '""'
+          );
+
+          return `"${escapedValue}"`;
+        })
+        .join(",")
+    )
+    .join("\n");
+
+  const file = new Blob([csv], {
+    type: "text/csv;charset=utf-8",
+  });
+
+  const downloadURL = URL.createObjectURL(file);
+  const downloadLink = document.createElement("a");
+
+  downloadLink.href = downloadURL;
+  downloadLink.download = filename;
+  downloadLink.click();
+
+  URL.revokeObjectURL(downloadURL);
+}
 
   function renderProjects() {
     content.innerHTML = `${viewTitle('Projects', 'Create, find and update projects across your organization', '<button class="primary create-trigger" type="button">＋ Create project</button>')}${filterControls(state.filter, state.query)}${projectCard(visibleProjects())}`;
