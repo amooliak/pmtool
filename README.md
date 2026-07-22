@@ -9,7 +9,7 @@ The GitHub Pages URL will be added here after deployment.
 ## Design
 
 - [Application wireframes and mockups](https://www.figma.com/design/DSIj8dqGSXkKbqbbQxDWmR/Untitled?node-id=6-4)
-- [Atlassian Jira UI component reference](https://www.figma.com/make/ibBLB0FFhbmJuropmBt4pV/Atlassian-Jira-UI-Component-Library--Community-)
+
 
 ## Features
 
