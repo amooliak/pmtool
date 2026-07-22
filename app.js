@@ -1,35 +1,257 @@
-const seedProjects=[
- {name:'Website Redesign',id:'PRJ-001',manager:'Sarah Chen',dept:'Marketing',phase:'Execution',status:'On Track',risk:'Low',progress:76,budget:420000,savings:250000},
- {name:'ERP Migration',id:'PRJ-002',manager:'James Wilson',dept:'IT',phase:'Planning',status:'At Risk',risk:'High',progress:42,budget:780000,savings:360000},
- {name:'Mobile App Launch',id:'PRJ-003',manager:'Maria Lopez',dept:'Product',phase:'Testing',status:'On Track',risk:'Medium',progress:63,budget:350000,savings:180000},
- {name:'Data Warehouse',id:'PRJ-004',manager:'David Kim',dept:'Analytics',phase:'Execution',status:'Delayed',risk:'High',progress:38,budget:510000,savings:275000},
- {name:'Brand Refresh',id:'PRJ-005',manager:'Emily Laurent',dept:'Marketing',phase:'Closure',status:'Completed',risk:'Low',progress:100,budget:145000,savings:98000},
- {name:'Security Audit',id:'PRJ-006',manager:'Tom Baker',dept:'Compliance',phase:'Execution',status:'On Track',risk:'Low',progress:55,budget:180000,savings:120000},
- {name:'CRM Integration',id:'PRJ-007',manager:'Lisa Tremblay',dept:'Sales',phase:'Execution',status:'At Risk',risk:'Medium',progress:48,budget:300000,savings:170000},
- {name:'Office Relocation',id:'PRJ-008',manager:'Marc Dubois',dept:'Operations',phase:'Initiation',status:'On Track',risk:'Low',progress:22,budget:200000,savings:100000}
-];
-let projects;try{projects=JSON.parse(localStorage.getItem('pmtool-projects'))||seedProjects}catch{projects=seedProjects}
-let view='portfolio',filter='All',query='',editingId=null;const content=document.querySelector('#content');
-const slug=s=>s.toLowerCase().replaceAll(' ','-');
-const saveProjects=()=>localStorage.setItem('pmtool-projects',JSON.stringify(projects));
-function table(list=filtered()){return `<div class="table-wrap"><table><thead><tr><th>Project name</th><th>Project ID</th><th>Manager</th><th>Department</th><th>Phase</th><th>Status</th><th>Risk</th><th>Progress</th><th>Actions</th></tr></thead><tbody>${list.map(p=>`<tr><td><b>${p.name}</b></td><td>${p.id}</td><td>${p.manager}</td><td>${p.dept}</td><td>${p.phase}</td><td><span class="badge ${slug(p.status)}">${p.status}</span></td><td><span class="risk ${p.risk.toLowerCase()}">${p.risk}</span></td><td><span class="progress"><i class="bar"><i style="width:${p.progress}%"></i></i>${p.progress}%</span></td><td><span class="row-actions"><button class="edit-project" data-id="${p.id}" title="Edit project" aria-label="Edit ${p.name}">✎</button><button class="delete-project" data-id="${p.id}" title="Delete project" aria-label="Delete ${p.name}">⌫</button></span></td></tr>`).join('')}</tbody></table></div>`}
-function filtered(){return projects.filter(p=>(filter==='All'||p.status===filter)&&p.name.toLowerCase().includes(query.toLowerCase()))}
-function controls(){return `<div class="filters"><div class="pills">${['All','On Track','Completed','At Risk'].map(x=>`<button class="filter ${filter===x?'active':''}" data-filter="${x}">${x}</button>`).join('')}</div><input class="search" aria-label="Search projects" placeholder="Search projects…" value="${query}"><select class="status-select" aria-label="Project status">${['All','On Track','At Risk','Delayed','Completed'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select></div>`}
-function card(){return `<section class="card"><div class="card-head"><h3>⌄ &nbsp;Projects Overview</h3><button class="ghost export-csv">⇩ Export CSV</button></div>${filtered().length?table():`<div class="empty">No projects match your filters.</div>`}</section>`}
-function render(){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));if(view==='dashboard')content.innerHTML=`<div class="view-title"><div><h2>Dashboard</h2><p>A live overview of your project portfolio</p></div></div><div class="metrics"><article class="metric"><p>Active projects</p><b>7</b><small>8 total projects</small></article><article class="metric"><p>Projects at risk</p><b>3</b><small>Need attention</small></article><article class="metric"><p>Total budget</p><b>$2,885,000</b><small>Across all projects</small></article><article class="metric"><p>Realized savings</p><b>$1,553,000</b><small>Current portfolio</small></article></div>`;
-else if(view==='projects')content.innerHTML=`<div class="view-title"><div><h2>Projects</h2><p>Create, find and update projects across your organization</p></div><button class="primary create-trigger">＋ Create project</button></div>${controls()}${card()}`;
-else if(view==='portfolio')content.innerHTML=`<div class="view-title"><div><h2>Project Portfolio</h2><p>Track and manage projects across your organization</p></div></div>${controls()}${card()}`;
-else content.innerHTML=`<div class="view-title"><div><h2>Reports</h2><p>View, compare and export project performance and financial data</p></div><button class="ghost export-csv">⇩ Export all</button></div><div class="report-filters"><select><option>All dates</option><option>This quarter</option></select><select><option>All departments</option><option>Marketing</option><option>IT</option></select><select><option>All risk levels</option><option>Low</option><option>Medium</option><option>High</option></select></div>${accordion('Project Overview','8 projects',table(),true)}${accordion('Savings Report','$1,553,000 savings','',false)}${accordion('Budget Report','68% avg utilization','',false)}`;bind();}
-function accordion(title,summary,body,open){return `<section class="accordion ${open?'':'closed'}"><button class="accordion-head"><span class="arrow">${open?'⌄':'›'}</span><strong>${title}</strong><span class="count">8 projects</span><span class="summary">${summary}</span><span class="export ghost">⇩ Export CSV</span></button><div class="accordion-body">${body}</div></section>`}
-function bindRows(){document.querySelectorAll('.edit-project').forEach(b=>b.onclick=()=>editProject(b.dataset.id));document.querySelectorAll('.delete-project').forEach(b=>b.onclick=()=>deleteProject(b.dataset.id));document.querySelectorAll('.export-csv').forEach(b=>b.onclick=exportCSV)}
-function bind(){document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;render()});document.querySelector('.search')?.addEventListener('input',e=>{query=e.target.value;const old=document.querySelector('.card');if(old){old.outerHTML=card();bindRows()}});document.querySelector('.status-select')?.addEventListener('change',e=>{filter=e.target.value;render()});document.querySelectorAll('.create-trigger').forEach(b=>b.onclick=openCreateModal);bindRows();document.querySelectorAll('.accordion-head').forEach(b=>b.onclick=e=>{if(e.target.closest('.export'))return;const a=b.closest('.accordion');a.classList.toggle('closed');b.querySelector('.arrow').textContent=a.classList.contains('closed')?'›':'⌄'})}
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
-const modal=document.querySelector('#modal'),quick=document.querySelector('#quick-menu'),form=document.querySelector('#project-form'),modalTitle=document.querySelector('.modal-head h2'),modalSubmit=form.querySelector('button[type="submit"]');function showModal(){quick.classList.remove('open');modal.classList.add('open');document.body.style.overflow='hidden'}function closeModal(){modal.classList.remove('open');document.body.style.overflow=''}
-function nextProjectId(){const next=Math.max(0,...projects.map(p=>Number(p.id.match(/\d+/)?.[0])||0))+1;return `PRJ-${String(next).padStart(3,'0')}`}
-function addOptionIfMissing(select,value){if(![...select.options].some(o=>o.value===value))select.add(new Option(value,value))}
-function openCreateModal(){editingId=null;form.reset();form.elements.id.value=nextProjectId();modalTitle.textContent='Create a new project';modalSubmit.textContent='Create project';showModal()}
-function editProject(id){const p=projects.find(item=>item.id===id);if(!p)return;editingId=id;addOptionIfMissing(form.elements.manager,p.manager);addOptionIfMissing(form.elements.department,p.dept);addOptionIfMissing(form.elements.status,p.status);form.elements.name.value=p.name;form.elements.id.value=p.id;form.elements.manager.value=p.manager;form.elements.department.value=p.dept;form.elements.status.value=p.status;form.elements.risk.value=p.risk;form.elements.progress.value=p.progress;modalTitle.textContent='Edit project';modalSubmit.textContent='Save changes';showModal()}
-function deleteProject(id){const p=projects.find(item=>item.id===id);if(!p||!confirm(`Delete “${p.name}”? This cannot be undone.`))return;projects=projects.filter(item=>item.id!==id);saveProjects();render()}
-document.querySelector('#fab').onclick=()=>quick.classList.toggle('open');document.querySelectorAll('.create-trigger').forEach(b=>b.onclick=openCreateModal);document.querySelector('#close-modal').onclick=closeModal;document.querySelector('#cancel-modal').onclick=closeModal;modal.onclick=e=>{if(e.target===modal)closeModal()};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
-form.onsubmit=e=>{e.preventDefault();const d=new FormData(form);const values={name:d.get('name'),id:d.get('id'),manager:d.get('manager'),dept:d.get('department'),status:d.get('status'),risk:d.get('risk'),progress:Number(d.get('progress'))};if(editingId){projects=projects.map(p=>p.id===editingId?{...p,...values}:p)}else{projects.push({...values,phase:'Initiation',budget:0,savings:0})}saveProjects();form.reset();closeModal();view='projects';render()};
-function exportCSV(){const head=['Project name','Project ID','Manager','Department','Phase','Status','Risk','Progress'];const csv=[head,...filtered().map(p=>[p.name,p.id,p.manager,p.dept,p.phase,p.status,p.risk,p.progress+'%'])].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='projecthub-projects.csv';a.click();URL.revokeObjectURL(a.href)}render();
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'pmtool-projects';
+  const { filterProjects, nextProjectId, validateProjectInput } = window.PMUtils;
+  const { projectTable, filterControls, projectCard, viewTitle, accordion } = window.PMComponents;
+  const content = document.querySelector('#content');
+  const modal = document.querySelector('#modal');
+  const form = document.querySelector('#project-form');
+  const modalTitle = document.querySelector('#modal-title');
+  const modalSubmit = form.querySelector('button[type="submit"]');
+  const formErrors = document.querySelector('#form-errors');
+  const quickMenu = document.querySelector('#quick-menu');
+  const fab = document.querySelector('#fab');
+  const toast = document.querySelector('#toast');
+
+  let state = { view: 'portfolio', filter: 'All', query: '', editingId: null };
+  let projects = loadProjects();
+  let previousFocus = null;
+  let toastTimer = null;
+
+  function loadProjects() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return Array.isArray(stored) ? stored : structuredClone(window.PM_DATA);
+    } catch (error) {
+      console.warn('Saved project data could not be loaded.', error);
+      return structuredClone(window.PM_DATA);
+    }
+  }
+
+  function saveProjects() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    } catch (error) {
+      showToast('Changes could not be saved in this browser.', true);
+      console.error(error);
+    }
+  }
+
+  function visibleProjects() {
+    return filterProjects(projects, state.filter, state.query);
+  }
+
+  function money(value) {
+    return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(value);
+  }
+
+  function metrics() {
+    return {
+      active: projects.filter(project => project.status !== 'Completed').length,
+      attention: projects.filter(project => ['At Risk', 'Delayed'].includes(project.status)).length,
+      budget: projects.reduce((sum, project) => sum + Number(project.budget || 0), 0),
+      savings: projects.reduce((sum, project) => sum + Number(project.savings || 0), 0)
+    };
+  }
+
+  function render() {
+    document.querySelectorAll('[data-view]').forEach(button => {
+      const active = button.dataset.view === state.view;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-current', active ? 'page' : 'false');
+    });
+
+    if (state.view === 'dashboard') renderDashboard();
+    if (state.view === 'projects') renderProjects();
+    if (state.view === 'portfolio') renderPortfolio();
+    if (state.view === 'reports') renderReports();
+    bindViewEvents();
+  }
+
+  function renderDashboard() {
+    const totals = metrics();
+    content.innerHTML = `${viewTitle('Dashboard', 'A live overview of your project portfolio')}
+      <div class="metrics">
+        <article class="metric"><p>Active projects</p><b>${totals.active}</b><small>${projects.length} total projects</small></article>
+        <article class="metric"><p>Projects needing attention</p><b>${totals.attention}</b><small>At risk or delayed</small></article>
+        <article class="metric"><p>Total budget</p><b>${money(totals.budget)}</b><small>Across all projects</small></article>
+        <article class="metric"><p>Forecasted savings</p><b>${money(totals.savings)}</b><small>Current portfolio</small></article>
+      </div>`;
+  }
+
+  function renderProjects() {
+    content.innerHTML = `${viewTitle('Projects', 'Create, find and update projects across your organization', '<button class="primary create-trigger" type="button">＋ Create project</button>')}${filterControls(state.filter, state.query)}${projectCard(visibleProjects())}`;
+  }
+
+  function renderPortfolio() {
+    content.innerHTML = `${viewTitle('Project portfolio', 'Track and manage projects across your organization')}${filterControls(state.filter, state.query)}${projectCard(visibleProjects())}`;
+  }
+
+  function renderReports() {
+    const totals = metrics();
+    content.innerHTML = `${viewTitle('Reports', 'View, compare and export project performance and financial data', '<button class="ghost export-csv" type="button">⇩ Export all</button>')}
+      <div class="report-filters" aria-label="Report filters"><select aria-label="Report date"><option>All dates</option><option>This quarter</option></select><select aria-label="Report department"><option>All departments</option><option>Marketing</option><option>IT</option></select><select aria-label="Report risk"><option>All risk levels</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+      ${accordion('Project overview', `${projects.length} projects`, projectTable(projects), true)}
+      ${accordion('Savings report', `${money(totals.savings)} forecast`, '<p class="placeholder">Detailed savings reporting is planned for the next release.</p>')}
+      ${accordion('Budget report', `${money(totals.budget)} total`, '<p class="placeholder">Detailed budget reporting is planned for the next release.</p>')}`;
+  }
+
+  function bindViewEvents() {
+    document.querySelectorAll('.filter').forEach(button => button.addEventListener('click', () => {
+      state.filter = button.dataset.filter;
+      render();
+    }));
+    document.querySelector('#project-search')?.addEventListener('input', event => {
+      state.query = event.target.value;
+      renderProjectsTableOnly();
+    });
+    document.querySelector('#status-filter')?.addEventListener('change', event => {
+      state.filter = event.target.value;
+      render();
+    });
+    document.querySelectorAll('.create-trigger').forEach(button => button.addEventListener('click', openCreateModal));
+    document.querySelectorAll('.edit-project').forEach(button => button.addEventListener('click', () => openEditModal(button.dataset.id)));
+    document.querySelectorAll('.delete-project').forEach(button => button.addEventListener('click', () => deleteProject(button.dataset.id)));
+    document.querySelectorAll('.export-csv').forEach(button => button.addEventListener('click', exportCSV));
+    document.querySelectorAll('.accordion-toggle').forEach(button => button.addEventListener('click', toggleAccordion));
+  }
+
+  function renderProjectsTableOnly() {
+    const tableOrEmpty = document.querySelector('.card .table-wrap, .card .empty');
+    if (!tableOrEmpty) return;
+    tableOrEmpty.outerHTML = projectTable(visibleProjects());
+    document.querySelectorAll('.edit-project').forEach(button => button.addEventListener('click', () => openEditModal(button.dataset.id)));
+    document.querySelectorAll('.delete-project').forEach(button => button.addEventListener('click', () => deleteProject(button.dataset.id)));
+  }
+
+  function toggleAccordion(event) {
+    const button = event.currentTarget;
+    const body = document.querySelector(`#${button.getAttribute('aria-controls')}`);
+    const expanded = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', String(!expanded));
+    button.querySelector('.arrow').textContent = expanded ? '›' : '⌄';
+    body.hidden = expanded;
+    button.closest('.accordion').classList.toggle('closed', expanded);
+  }
+
+  function showModal() {
+    previousFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add('modal-open');
+    form.querySelector('input, select, textarea').focus();
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    formErrors.hidden = true;
+    previousFocus?.focus();
+  }
+
+  function openCreateModal() {
+    state.editingId = null;
+    form.reset();
+    form.elements.id.value = nextProjectId(projects);
+    form.elements.progress.value = 0;
+    modalTitle.textContent = 'Create a new project';
+    modalSubmit.textContent = 'Create project';
+    showModal();
+  }
+
+  function ensureOption(select, value) {
+    if (value && ![...select.options].some(option => option.value === value)) select.add(new Option(value, value));
+  }
+
+  function openEditModal(id) {
+    const project = projects.find(item => item.id === id);
+    if (!project) return showToast('That project could not be found.', true);
+    state.editingId = id;
+    ensureOption(form.elements.manager, project.manager);
+    ensureOption(form.elements.department, project.dept);
+    Object.entries({ ...project, department: project.dept, cost: project.budget }).forEach(([key, value]) => {
+      if (form.elements[key]) form.elements[key].value = value ?? '';
+    });
+    modalTitle.textContent = 'Edit project';
+    modalSubmit.textContent = 'Save changes';
+    showModal();
+  }
+
+  function projectFromForm() {
+    const data = new FormData(form);
+    return {
+      name: data.get('name').trim(), id: data.get('id').trim().toUpperCase(), manager: data.get('manager'), dept: data.get('department'),
+      phase: state.editingId ? projects.find(project => project.id === state.editingId)?.phase || 'Initiation' : 'Initiation',
+      status: data.get('status'), risk: data.get('risk'), progress: Number(data.get('progress')), budget: Number(data.get('cost') || 0),
+      savings: Number(data.get('savings') || 0), start: data.get('start'), target: data.get('target'), description: data.get('description').trim(), blockers: data.get('blockers').trim()
+    };
+  }
+
+  function submitProject(event) {
+    event.preventDefault();
+    const project = projectFromForm();
+    const errors = validateProjectInput(project, projects, state.editingId);
+    if (errors.length) {
+      formErrors.innerHTML = `<strong>Please fix the following:</strong><ul>${errors.map(error => `<li>${window.PMUtils.escapeHtml(error)}</li>`).join('')}</ul>`;
+      formErrors.hidden = false;
+      formErrors.focus();
+      return;
+    }
+    if (state.editingId) projects = projects.map(item => item.id === state.editingId ? project : item);
+    else projects.push(project);
+    saveProjects();
+    closeModal();
+    state.view = 'projects';
+    render();
+    showToast(state.editingId ? 'Project updated.' : 'Project created.');
+  }
+
+  function deleteProject(id) {
+    const project = projects.find(item => item.id === id);
+    if (!project || !window.confirm(`Delete “${project.name}”? This cannot be undone.`)) return;
+    projects = projects.filter(item => item.id !== id);
+    saveProjects();
+    render();
+    showToast('Project deleted.');
+  }
+
+  function showToast(message, isError = false) {
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.toggle('error', isError);
+    toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
+  }
+
+  function exportCSV() {
+    const headers = ['Project name', 'Project ID', 'Manager', 'Department', 'Phase', 'Status', 'Risk', 'Progress'];
+    const rows = visibleProjects().map(project => [project.name, project.id, project.manager, project.dept, project.phase, project.status, project.risk, `${project.progress}%`]);
+    const csv = [headers, ...rows].map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    link.download = 'pmtool-projects.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('CSV exported.');
+  }
+
+  document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => { state.view = button.dataset.view; render(); content.focus(); }));
+  document.querySelectorAll('header .create-trigger').forEach(button => button.addEventListener('click', openCreateModal));
+  fab.addEventListener('click', () => { const open = quickMenu.hidden; quickMenu.hidden = !open; fab.setAttribute('aria-expanded', String(open)); if (open) quickMenu.querySelector('button:not(:disabled)').focus(); });
+  quickMenu.querySelector('.create-trigger').addEventListener('click', () => { quickMenu.hidden = true; fab.setAttribute('aria-expanded', 'false'); openCreateModal(); });
+  document.querySelector('#close-modal').addEventListener('click', closeModal);
+  document.querySelector('#cancel-modal').addEventListener('click', closeModal);
+  modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+  form.addEventListener('submit', submitProject);
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !modal.hidden) closeModal();
+    if (event.key === 'Tab' && !modal.hidden) {
+      const focusable = [...modal.querySelectorAll('button:not(:disabled), input, select, textarea')];
+      const first = focusable[0], last = focusable.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+
+  render();
+})();
