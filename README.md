@@ -4,7 +4,7 @@ PM Tool is a responsive project-portfolio dashboard built with semantic HTML, CS
 
 ## Live application
 
-The GitHub Pages URL will be added here after deployment.
+[https://amooliak.github.io/pmtool/](https://amooliak.github.io/pmtool/)
 
 ## Design
 
