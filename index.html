@@ -12,9 +12,145 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="auth-pending">
     <a class="skip-link" href="#content">Skip to main content</a>
-    <div class="app">
+
+    <section class="auth-landing" id="auth-landing" aria-labelledby="auth-title">
+      <form class="auth-card" id="prototype-login">
+        <div class="auth-brand">
+          <span class="auth-logo" aria-hidden="true">PM</span>
+          <strong>PM Tool</strong>
+        </div>
+
+        <div class="auth-intro">
+          <h1 id="auth-title">Welcome back</h1>
+          <p>Select your role to sign in</p>
+        </div>
+
+        <div class="role-selection" aria-label="Select a prototype role">
+          <button class="role-card" id="team-member-role" type="button">
+            <span class="role-icon">
+              <img src="assets/login/user.svg" alt="" />
+            </span>
+            <strong>Team Member</strong>
+            <p>View projects and download reports</p>
+          </button>
+
+          <button class="role-card selected" id="manager-role" type="button">
+            <span class="role-icon">
+              <img src="assets/login/shield.svg" alt="" />
+            </span>
+            <strong>Manager</strong>
+            <p>Full access to create and manage projects</p>
+          </button>
+        </div>
+
+        <div class="auth-fields">
+          <label for="company-id">Company ID</label>
+          <input
+            id="company-id"
+            type="text"
+            placeholder="Enter your company ID"
+            autocomplete="off"
+          />
+
+          <label for="prototype-password">Password</label>
+          <input
+            id="prototype-password"
+            type="password"
+            placeholder="Enter your password"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="auth-options">
+          <label><input type="checkbox" /> Remember me</label>
+          <button type="button">Forgot password?</button>
+        </div>
+
+        <button class="auth-submit" type="submit">Sign in as Manager</button>
+        <p class="auth-help">Need access? Contact your administrator</p>
+      </form>
+    </section>
+
+    <section class="team-member-view" id="team-member-view" aria-label="Team member project portfolio" hidden>
+      <aside class="tm-sidebar">
+        <div class="tm-brand">
+          <span class="tm-logo" aria-hidden="true">PM</span>
+          <strong>PM Tool</strong>
+        </div>
+        <nav class="tm-nav" aria-label="Team member navigation">
+          <button type="button"><i data-lucide="layout-dashboard" aria-hidden="true"></i>Dashboard</button>
+          <button class="active" type="button" aria-current="page"><i data-lucide="folder" aria-hidden="true"></i>Projects</button>
+          <button type="button"><i data-lucide="folder" aria-hidden="true"></i>Portfolio</button>
+          <button type="button"><i data-lucide="list-filter" aria-hidden="true"></i>Filters</button>
+          <button type="button"><i data-lucide="users" aria-hidden="true"></i>People</button>
+          <button type="button"><i data-lucide="settings" aria-hidden="true"></i>Settings</button>
+        </nav>
+        <div class="tm-user">
+          <span class="tm-avatar" aria-hidden="true">JD</span>
+          <span><strong>John Doe</strong><small>john@company.com</small></span>
+          <button id="team-member-exit" type="button" aria-label="Return to role selection">
+            <i data-lucide="external-link" aria-hidden="true"></i>
+          </button>
+        </div>
+      </aside>
+
+      <div class="tm-shell">
+        <header class="tm-header">
+          <div>
+            <p class="tm-breadcrumb">Home <span aria-hidden="true">›</span> Projects</p>
+            <h1>Project Portfolio</h1>
+          </div>
+          <div class="tm-header-actions">
+            <div class="tm-current-user">
+              <span class="tm-avatar tm-avatar-blue" aria-hidden="true">JW</span>
+              <span><strong>James Wilson</strong><small>TEAM MEMBER</small></span>
+            </div>
+            <label class="tm-search">
+              <span class="visually-hidden">Search projects</span>
+              <i data-lucide="search" aria-hidden="true"></i>
+              <input id="team-project-search" type="search" placeholder="Search projects..." />
+            </label>
+          </div>
+        </header>
+
+        <main class="tm-content">
+          <div class="tm-notice">
+            <div><i data-lucide="info" aria-hidden="true"></i><p><strong>You have view-only access.</strong> You can download reports from the Reports tab.</p></div>
+            <button class="tm-download" id="team-download-reports" type="button">
+              <i data-lucide="download" aria-hidden="true"></i>Download Reports
+            </button>
+          </div>
+
+          <div class="tm-tabs" role="tablist" aria-label="Filter projects">
+            <button class="active" type="button" role="tab" aria-selected="true" data-team-filter="All">All Projects</button>
+            <button type="button" role="tab" aria-selected="false" data-team-filter="Active">Active</button>
+            <button type="button" role="tab" aria-selected="false" data-team-filter="Completed">Completed</button>
+          </div>
+
+          <div class="tm-table-card">
+            <div class="tm-table-wrap">
+              <table class="tm-table">
+                <thead>
+                  <tr><th>Project Name</th><th>Project ID</th><th>Manager</th><th>Department</th><th>Status</th><th>Health</th></tr>
+                </thead>
+                <tbody id="team-project-rows">
+                  <tr data-team-status="Active"><td><strong>Website Redesign</strong></td><td>PRJ-001</td><td>Sarah Chen</td><td>Marketing</td><td><span class="tm-status active-status">Active</span></td><td><span class="tm-health good">On Track</span></td></tr>
+                  <tr data-team-status="Active"><td><strong>ERP Migration</strong></td><td>PRJ-002</td><td>James Wilson</td><td>IT</td><td><span class="tm-status active-status">Active</span></td><td><span class="tm-health warning">At Risk</span></td></tr>
+                  <tr data-team-status="Active"><td><strong>Mobile App Launch</strong></td><td>PRJ-003</td><td>Maria Lopez</td><td>Product</td><td><span class="tm-status active-status">Active</span></td><td><span class="tm-health good">On Track</span></td></tr>
+                  <tr data-team-status="Active"><td><strong>Data Warehouse</strong></td><td>PRJ-004</td><td>David Kim</td><td>Engineering</td><td><span class="tm-status active-status">Active</span></td><td><span class="tm-health good">On Track</span></td></tr>
+                  <tr data-team-status="Completed"><td><strong>Brand Refresh</strong></td><td>PRJ-005</td><td>Emily Foster</td><td>Marketing</td><td><span class="tm-status complete-status">Completed</span></td><td><span class="tm-health good">On Track</span></td></tr>
+                </tbody>
+              </table>
+              <p class="tm-empty" id="team-project-empty" hidden>No projects match your search.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <div class="app" id="pm-app">
       <aside class="sidebar" aria-label="Workspace navigation">
         <div class="brand">
           <b aria-hidden="true">P</b><strong>PM Tool</strong>

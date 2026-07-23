@@ -13,11 +13,60 @@
   const quickMenu = document.querySelector('#quick-menu');
   const fab = document.querySelector('#fab');
   const toast = document.querySelector('#toast');
+  const authLanding = document.querySelector('#auth-landing');
+  const prototypeLogin = document.querySelector('#prototype-login');
+  const managerRole = document.querySelector('#manager-role');
+  const teamMemberRole = document.querySelector('#team-member-role');
+  const teamMemberView = document.querySelector('#team-member-view');
+  const teamMemberExit = document.querySelector('#team-member-exit');
+  const teamProjectSearch = document.querySelector('#team-project-search');
+  const teamProjectRows = [...document.querySelectorAll('#team-project-rows tr')];
+  const teamProjectEmpty = document.querySelector('#team-project-empty');
+  let teamProjectFilter = 'All';
 
   let state = { view: 'portfolio', filter: 'All', query: '', editingId: null };
   let projects = loadProjects();
   let previousFocus = null;
   let toastTimer = null;
+
+  function enterManagerPrototype() {
+    authLanding.hidden = true;
+    teamMemberView.hidden = true;
+    document.body.classList.remove('auth-pending');
+    document.body.classList.remove('team-member-active');
+    state.view = 'dashboard';
+    render();
+    window.lucide?.createIcons();
+    content.focus();
+  }
+
+  function enterTeamMemberPrototype() {
+    authLanding.hidden = true;
+    teamMemberView.hidden = false;
+    document.body.classList.remove('auth-pending');
+    document.body.classList.add('team-member-active');
+    window.lucide?.createIcons();
+  }
+
+  function returnToRoleSelection() {
+    teamMemberView.hidden = true;
+    authLanding.hidden = false;
+    document.body.classList.remove('team-member-active');
+    document.body.classList.add('auth-pending');
+    teamMemberRole.focus();
+  }
+
+  function filterTeamProjects() {
+    const query = teamProjectSearch.value.trim().toLowerCase();
+    let visibleCount = 0;
+    teamProjectRows.forEach(row => {
+      const matchesTab = teamProjectFilter === 'All' || row.dataset.teamStatus === teamProjectFilter;
+      const matchesSearch = row.textContent.toLowerCase().includes(query);
+      row.hidden = !(matchesTab && matchesSearch);
+      if (!row.hidden) visibleCount += 1;
+    });
+    teamProjectEmpty.hidden = visibleCount !== 0;
+  }
 
   function loadProjects() {
     try {
@@ -708,6 +757,26 @@ function exportSavingsCSV(data, periodLabel, filename) {
   document.querySelector('#cancel-modal').addEventListener('click', closeModal);
   modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
   form.addEventListener('submit', submitProject);
+  managerRole.addEventListener('click', enterManagerPrototype);
+  teamMemberRole.addEventListener('click', enterTeamMemberPrototype);
+  teamMemberExit.addEventListener('click', returnToRoleSelection);
+  teamProjectSearch.addEventListener('input', filterTeamProjects);
+  document.querySelectorAll('[data-team-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      teamProjectFilter = button.dataset.teamFilter;
+      document.querySelectorAll('[data-team-filter]').forEach(tab => {
+        const active = tab === button;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', String(active));
+      });
+      filterTeamProjects();
+    });
+  });
+  document.querySelector('#team-download-reports').addEventListener('click', exportCSV);
+  prototypeLogin.addEventListener('submit', event => {
+    event.preventDefault();
+    enterManagerPrototype();
+  });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !modal.hidden) closeModal();
     if (event.key === 'Tab' && !modal.hidden) {
